@@ -1,5 +1,5 @@
 import { DatePipe, NgStyle } from '@angular/common';
-import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, linkedSignal, model, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { injectCdBlink } from '@flight-demo/shared/core';
 import { Flight } from '../../logic-flight';
@@ -15,7 +15,7 @@ import { Flight } from '../../logic-flight';
   template: `
     <div
       class="card"
-      [ngStyle]="{ 'background-color': selected() ? 'rgb(204, 197, 185)' : 'white' }"
+      [ngStyle]="{ 'background-color': selectedState() ? 'rgb(204, 197, 185)' : 'white' }"
     >
       @let flight = item();
       <div class="card-header">
@@ -30,7 +30,7 @@ import { Flight } from '../../logic-flight';
             (click)="toggleSelection()"
             class="btn btn-info btn-sm"
             style="min-width: 85px; margin-right: 5px"
-          >{{ selected() ? "Remove" : "Select" }}</button>
+          >{{ selectedState() ? "Remove" : "Select" }}</button>
           <a
             [routerLink]="['../edit', flight.id]"
             class="btn btn-success btn-sm"
@@ -41,6 +41,11 @@ import { Flight } from '../../logic-flight';
             class="btn btn-danger btn-sm"
             style="min-width: 85px; margin-right: 5px"
           >Delay</button>
+          <button
+            (click)="sendSelection()"
+            class="btn btn-info btn-sm"
+            style="min-width: 85px; margin-right: 5px"
+          >Send Selection State</button>
         </p>
       </div>
     </div>
@@ -52,14 +57,20 @@ export class FlightCardComponent {
   blink = injectCdBlink();
 
   readonly item = input.required<Flight>();
-  readonly selected = model(false);
+  readonly selected = input(false);
+  readonly selectedChange = output<boolean>();
+  readonly selectedState = linkedSignal(this.selected);
   readonly delayTrigger = output<Flight>();
 
   toggleSelection(): void {
-    this.selected.update(curr => !curr);
+    this.selectedState.update(curr => !curr);
   }
 
   delay(): void {
     this.delayTrigger.emit(this.item());
+  }
+
+  sendSelection(): void {
+    this.selectedChange.emit(this.selectedState());
   }
 }
