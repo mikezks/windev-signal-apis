@@ -2,10 +2,11 @@ import { Component, effect, inject, input, numberAttribute } from '@angular/core
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { pipe, switchMap } from 'rxjs';
 import { initialPassenger } from '../../logic-passenger';
 import { PassengerService } from '../../logic-passenger/data-access/passenger.service';
 import { validatePassengerStatus } from '../../util-validation';
+import { signalOperators } from '@flight-demo/shared/core';
 
 
 @Component({
@@ -34,6 +35,11 @@ export class PassengerEditComponent {
       switchMap(id => this.passengerService.findById(id))
     ), { initialValue: initialPassenger }
   );
+
+  // Alternative lean implementation
+  private passengerSignalOperators = signalOperators(this.id, pipe(
+    switchMap(id => this.passengerService.findById(id))
+  ), initialPassenger);
 
   /**
    * switchMap  -> cancel
