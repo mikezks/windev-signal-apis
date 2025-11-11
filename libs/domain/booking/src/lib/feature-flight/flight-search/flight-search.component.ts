@@ -20,7 +20,7 @@ export class FlightSearchComponent {
 
   protected filter = signal<FlightFilter>({
     from: 'Paris',
-    to: 'New York',
+    to: 'London',
     urgent: false
   });
   protected route = computed(
