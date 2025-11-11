@@ -57,6 +57,13 @@
       >
         Save
       </button>
+      <button
+        (click)="passengerResource.reload()"
+        [disabled]="!editForm.valid"
+        class="btn btn-default"
+      >
+        Reload
+      </button>
       <a
         [routerLink]="['..', id()+1]"
         class="btn btn-default"

@@ -1,12 +1,9 @@
+import { httpResource } from '@angular/common/http';
 import { Component, effect, inject, input, numberAttribute } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { pipe, switchMap } from 'rxjs';
-import { initialPassenger } from '../../logic-passenger';
-import { PassengerService } from '../../logic-passenger/data-access/passenger.service';
+import { initialPassenger, Passenger } from '../../logic-passenger';
 import { validatePassengerStatus } from '../../util-validation';
-import { signalOperators } from '@flight-demo/shared/core';
 
 
 @Component({
@@ -18,7 +15,6 @@ import { signalOperators } from '@flight-demo/shared/core';
   templateUrl: './passenger-edit.component.html'
 })
 export class PassengerEditComponent {
-  private passengerService = inject(PassengerService);
   protected editForm = inject(NonNullableFormBuilder).group({
     id: [0],
     firstName: [''],
@@ -30,29 +26,21 @@ export class PassengerEditComponent {
   });
 
   id = input(0, { transform: numberAttribute });
-  private passenger = toSignal(
-    toObservable(this.id).pipe(
-      switchMap(id => this.passengerService.findById(id))
-    ), { initialValue: initialPassenger }
-  );
-
-  // Alternative lean implementation
-  private passengerSignalOperators = signalOperators(this.id, pipe(
-    switchMap(id => this.passengerService.findById(id))
-  ), initialPassenger);
-
-  /**
-   * switchMap  -> cancel
-   * concatMap  -> wait
-   * exhaustMap -> ignore while inner is still running
-   * mergeMap   -> parallel
-   */
-
+  protected passengerResource = httpResource<Passenger>(() => ({
+    url: 'https://demo.angulararchitects.io/api/passenger',
+    params: { id: this.id() }
+  }), { defaultValue: initialPassenger });
+  
   constructor() {
-    effect(() => this.editForm.patchValue(this.passenger()));
+    effect(() => {
+      if (this.passengerResource.hasValue()) {
+        this.editForm.patchValue(this.passengerResource.value());
+      }
+    });
   }
 
   protected save(): void {
+    this.passengerResource.set(this.editForm.getRawValue());
     console.log(this.editForm.value);
   }
 }
